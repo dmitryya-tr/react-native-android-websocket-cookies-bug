@@ -30,7 +30,7 @@ const patches = [
         '',
       ],
       [
-        '// We intentionally disable the `ktfmtCheck` tasks as the formatting is primarly handled inside\n// fbsource\nallprojects { tasks.withType<com.ncorti.ktfmt.gradle.tasks.KtfmtCheckTask>() { enabled = false } }\n',
+        'allprojects { tasks.withType<com.ncorti.ktfmt.gradle.tasks.KtfmtCheckTask>() { enabled = false } }\n',
         '',
       ],
     ],

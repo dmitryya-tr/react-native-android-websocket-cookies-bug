@@ -21,13 +21,21 @@ const connections = new Map();
 
 const server = http.createServer((request, response) => {
   const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
+  const isStatusRoute =
+    request.method === 'GET' && (url.pathname === BASE_PATH || url.pathname === STATUS_PATH);
+  const isNegotiateRoute =
+    request.method === 'POST' && url.pathname === `${HUB_PATH}/negotiate`;
+  const isKnownRoute =
+    url.pathname === BASE_PATH ||
+    url.pathname === STATUS_PATH ||
+    url.pathname === `${HUB_PATH}/negotiate`;
 
-  if (request.method === 'OPTIONS') {
+  if (request.method === 'OPTIONS' && isKnownRoute) {
     writeJson(request, response, 204, null);
     return;
   }
 
-  if (request.method === 'GET' && (url.pathname === BASE_PATH || url.pathname === STATUS_PATH)) {
+  if (isStatusRoute) {
     writeJson(request, response, 200, {
       message:
         `Prime cookies here before starting SignalR. The scoped cookie intentionally omits Path so it inherits the ${BASE_PATH} scope.`,
@@ -39,7 +47,7 @@ const server = http.createServer((request, response) => {
     return;
   }
 
-  if (request.method === 'POST' && url.pathname === `${HUB_PATH}/negotiate`) {
+  if (isNegotiateRoute) {
     const connectionToken = randomUUID();
     const report = buildRequestReport(request);
 

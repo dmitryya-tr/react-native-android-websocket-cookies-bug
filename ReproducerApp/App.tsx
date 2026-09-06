@@ -82,6 +82,7 @@ function AppContent() {
         withCredentials: true,
       })
       .build();
+    let isFailingConnection = false;
 
     connection.on('ConnectionReportUpdated', report => {
       setSignalRReport(JSON.stringify(report, null, 2));
@@ -90,6 +91,10 @@ function AppContent() {
     connection.onclose(error => {
       if (connectionRef.current === connection) {
         connectionRef.current = null;
+      }
+
+      if (isFailingConnection) {
+        return;
       }
 
       setConnectionState(error ? `Disconnected: ${error.message}` : 'Disconnected');
@@ -104,6 +109,7 @@ function AppContent() {
       const report = await connection.invoke('GetConnectionReport');
       setSignalRReport(JSON.stringify(report, null, 2));
     } catch (error) {
+      isFailingConnection = true;
       await connection.stop().catch(() => undefined);
       connectionRef.current = null;
       setConnectionState('Failed');
