@@ -80,6 +80,12 @@ server.on('upgrade', (request, socket, head) => {
     return;
   }
 
+  if (!isOriginAllowed(request.headers.origin)) {
+    socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+    socket.destroy();
+    return;
+  }
+
   websocketServer.handleUpgrade(request, socket, head, websocket => {
     websocketServer.emit('connection', websocket, request, url);
   });
@@ -229,7 +235,7 @@ function buildSetCookieHeader(pathname) {
 function applyCorsHeaders(request, response) {
   const origin = request.headers.origin;
 
-  if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+  if (!isOriginAllowed(origin)) {
     return;
   }
 
@@ -238,6 +244,14 @@ function applyCorsHeaders(request, response) {
   response.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   response.setHeader('Vary', 'Origin');
+}
+
+function isOriginAllowed(origin) {
+  if (!origin) {
+    return ALLOWED_ORIGINS.length === 0;
+  }
+
+  return ALLOWED_ORIGINS.includes(origin);
 }
 
 function buildAbsoluteHttpUrl(host, port, pathname) {
