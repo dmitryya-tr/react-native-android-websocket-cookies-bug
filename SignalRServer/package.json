@@ -1,0 +1,13 @@
+{
+  "name": "signalr-cookie-path-server",
+  "version": "1.0.0",
+  "description": "Minimal SignalR cookie path repro server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "private": true,
+  "dependencies": {
+    "ws": "^8.21.3"
+  }
+}

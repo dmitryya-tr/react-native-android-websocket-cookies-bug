@@ -1,17 +1,39 @@
-# React Native Reproducer
+# SignalR cookie path reproducer
 
-> [!IMPORTANT]  
-> Do not just **fork** this repository, but use instead the [![Use this template](https://img.shields.io/badge/-Use%20this%20template-brightgreen)](https://github.com/cortinico/reproducer-react-native/generate) button on GitHub.
+This repository contains:
 
-This is the React Native **reproducer** template. 
+- `SignalRServer/`: a minimal Node server that exposes its API under `/my/path`
+- `ReproducerApp/`: a React Native app that talks to that server through SignalR
 
-You can use this template to create a minimal, complete, and reproducible project that the community can use to understand what's your problem. You can read more about the principles of a good reproducible project [here](https://stackoverflow.com/help/mcve).
+The server sets two cookies on every HTTP response:
 
-This template is up to date with `react-native@latest` as you can find it on [npm](https://www.npmjs.com/package/react-native/v/latest).
+- `rootCookie=...; Path=/`
+- `scopedCookie=...` without a `Path` attribute, so it inherits the `/my/path` scope
 
-## How to use this repository
+## Run the Node server
 
-1. Click on [![Use this template](https://img.shields.io/badge/-Use%20this%20template-brightgreen)](https://github.com/cortinico/reproducer-react-native/generate) button to create a new repository starting from this one.
-2. Git clone your repository locally.
-3. Edit the project to reproduce the failure you're seeing.
-4. Push your changes, so that Github Actions can run the CI.
+```sh
+cd /home/runner/work/react-native-android-websocket-cookies-bug/react-native-android-websocket-cookies-bug/SignalRServer
+npm install
+npm start
+```
+
+The default server URL is:
+
+```txt
+http://localhost:3000/my/path
+```
+
+## Run the React Native app
+
+Use the default base URL in the app and replace the host as needed for your device or emulator. For Android emulator, the app defaults to:
+
+```txt
+http://10.0.2.2:3000/my/path
+```
+
+Then:
+
+1. Tap **Prime cookies**
+2. Tap **Connect SignalR**
+3. Compare the HTTP report and the SignalR report to see which cookies the server received
