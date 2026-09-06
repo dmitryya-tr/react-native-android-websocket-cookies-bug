@@ -5,6 +5,7 @@ const {WebSocketServer} = require('ws');
 
 const HOST = process.env.HOST ?? '0.0.0.0';
 const PORT = Number(process.env.PORT ?? 3000);
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? null;
 const BASE_PATH = normalizePath(process.env.BASE_PATH ?? '/my/path');
 const HUB_PATH = `${BASE_PATH}/hub`;
 const STATUS_PATH = `${BASE_PATH}/status`;
@@ -157,18 +158,34 @@ function parseCookies(cookieHeader) {
 }
 
 function writeJson(request, response, statusCode, payload) {
-  const origin = request.headers.origin;
+  const origin = getAllowedOrigin(request.headers.origin);
 
   response.statusCode = statusCode;
-  response.setHeader('Access-Control-Allow-Credentials', 'true');
-  response.setHeader('Access-Control-Allow-Headers', 'content-type,x-requested-with');
-  response.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  response.setHeader('Access-Control-Allow-Origin', origin ?? '*');
   response.setHeader('Content-Type', 'application/json; charset=utf-8');
   response.setHeader('Set-Cookie', [
     'rootCookie=root-cookie-value; Path=/; HttpOnly; SameSite=Lax',
     'scopedCookie=scoped-cookie-value; HttpOnly; SameSite=Lax',
   ]);
-  response.setHeader('Vary', 'Origin');
+
+  if (origin) {
+    response.setHeader('Access-Control-Allow-Credentials', 'true');
+    response.setHeader('Access-Control-Allow-Headers', 'content-type,x-requested-with');
+    response.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    response.setHeader('Access-Control-Allow-Origin', origin);
+    response.setHeader('Vary', 'Origin');
+  }
+
   response.end(payload === null ? '' : JSON.stringify(payload, null, 2));
+}
+
+function getAllowedOrigin(origin) {
+  if (!origin || !ALLOWED_ORIGIN) {
+    return null;
+  }
+
+  if (origin === ALLOWED_ORIGIN) {
+    return origin;
+  }
+
+  return null;
 }

@@ -13,7 +13,7 @@ The server sets two cookies on every HTTP response:
 ## Run the Node server
 
 ```sh
-cd /home/runner/work/react-native-android-websocket-cookies-bug/react-native-android-websocket-cookies-bug/SignalRServer
+cd SignalRServer
 npm install
 npm start
 ```
@@ -23,6 +23,8 @@ The default server URL is:
 ```txt
 http://localhost:3000/my/path
 ```
+
+If you need browser-style CORS during testing, set `ALLOWED_ORIGIN` to the exact origin you want the server to echo while also allowing credentials.
 
 ## Run the React Native app
 
