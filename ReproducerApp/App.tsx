@@ -49,7 +49,14 @@ function AppContent() {
       const response = await fetch(statusUrl, {
         credentials: 'include',
       });
-      const payload = await response.json();
+      const payloadText = await response.text();
+
+      if (!response.ok) {
+        setHttpReport(`HTTP ${response.status}: ${payloadText || response.statusText}`);
+        return;
+      }
+
+      const payload = payloadText ? JSON.parse(payloadText) : {};
 
       setHttpReport(JSON.stringify(payload, null, 2));
     } catch (error) {

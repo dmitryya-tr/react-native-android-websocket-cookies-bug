@@ -11,6 +11,9 @@ describe('signalRConfig', () => {
   });
 
   it('normalizes trailing slashes before building endpoint URLs', () => {
+    expect(normalizeBaseUrl('  https://my.domain/my/path/  ')).toBe(
+      'https://my.domain/my/path',
+    );
     expect(normalizeBaseUrl('https://my.domain/my/path/')).toBe(
       'https://my.domain/my/path',
     );

@@ -24,8 +24,6 @@ The default server URL is:
 http://localhost:3000/my/path
 ```
 
-If you need browser-style CORS during testing, set `ALLOWED_ORIGIN` to the exact origin you want the server to echo while also allowing credentials.
-
 ## Run the React Native app
 
 Use the default base URL in the app and replace the host as needed for your device or emulator. For Android emulator, the app defaults to:
