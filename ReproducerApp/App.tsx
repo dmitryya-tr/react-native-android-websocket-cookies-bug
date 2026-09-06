@@ -85,13 +85,19 @@ function AppContent() {
     let isFailingConnection = false;
 
     connection.on('ConnectionReportUpdated', report => {
+      if (connectionRef.current !== connection) {
+        return;
+      }
+
       setSignalRReport(JSON.stringify(report, null, 2));
     });
 
     connection.onclose(error => {
-      if (connectionRef.current === connection) {
-        connectionRef.current = null;
+      if (connectionRef.current !== connection) {
+        return;
       }
+
+      connectionRef.current = null;
 
       if (isFailingConnection) {
         return;
@@ -104,14 +110,28 @@ function AppContent() {
 
     try {
       await connection.start();
+
+      if (connectionRef.current !== connection) {
+        return;
+      }
+
       setConnectionState('Connected');
 
       const report = await connection.invoke('GetConnectionReport');
+
+      if (connectionRef.current !== connection) {
+        return;
+      }
+
       setSignalRReport(JSON.stringify(report, null, 2));
     } catch (error) {
       isFailingConnection = true;
       await connection.stop().catch(() => undefined);
-      connectionRef.current = null;
+
+      if (connectionRef.current === connection) {
+        connectionRef.current = null;
+      }
+
       setConnectionState('Failed');
       setSignalRReport(formatError(error));
     }

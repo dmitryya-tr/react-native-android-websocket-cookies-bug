@@ -6,13 +6,15 @@ import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 import App from '../App';
 
-const mockConnection = {
+const connectionQueue = [];
+const createMockConnection = () => ({
   invoke: jest.fn().mockResolvedValue({connected: true}),
   on: jest.fn(),
   onclose: jest.fn(),
   start: jest.fn().mockResolvedValue(undefined),
   stop: jest.fn().mockResolvedValue(undefined),
-};
+});
+let mockConnection = createMockConnection();
 
 jest.mock('react-native-safe-area-context', () => {
   const {Fragment, jsx} = require('react/jsx-runtime');
@@ -25,6 +27,8 @@ jest.mock('react-native-safe-area-context', () => {
 
 beforeEach(() => {
   global.fetch = jest.fn();
+  connectionQueue.length = 0;
+  mockConnection = createMockConnection();
   mockConnection.invoke.mockReset().mockResolvedValue({connected: true});
   mockConnection.on.mockReset();
   mockConnection.onclose.mockReset();
@@ -34,7 +38,7 @@ beforeEach(() => {
 
 jest.mock('@microsoft/signalr', () => {
   const builder = {
-    build: jest.fn(() => mockConnection),
+    build: jest.fn(() => connectionQueue.shift() ?? mockConnection),
     withUrl: jest.fn(() => builder),
   };
 
@@ -137,4 +141,44 @@ test('shows a failure state when the signalr connection fails', async () => {
   expect(mockConnection.stop).toHaveBeenCalled();
   expect(JSON.stringify(app.toJSON())).toContain('Failed');
   expect(JSON.stringify(app.toJSON())).toContain('boom');
+});
+
+test('ignores stale overlapping connection results', async () => {
+  let app: ReactTestRenderer.ReactTestRenderer;
+  let resolveFirstStart;
+
+  const firstConnection = createMockConnection();
+  firstConnection.start.mockImplementation(
+    () => new Promise(resolve => {
+      resolveFirstStart = resolve;
+    }),
+  );
+  firstConnection.invoke.mockResolvedValue({connected: 'first'});
+
+  const secondConnection = createMockConnection();
+  secondConnection.invoke.mockResolvedValue({connected: 'second'});
+
+  connectionQueue.push(firstConnection, secondConnection);
+
+  await ReactTestRenderer.act(() => {
+    app = ReactTestRenderer.create(<App />);
+  });
+
+  const connectButton = app.root.findByProps({title: 'Connect SignalR'});
+
+  await ReactTestRenderer.act(async () => {
+    connectButton.props.onPress();
+    await Promise.resolve();
+    await connectButton.props.onPress();
+  });
+
+  await ReactTestRenderer.act(async () => {
+    resolveFirstStart();
+    await Promise.resolve();
+  });
+
+  expect(firstConnection.stop).toHaveBeenCalled();
+  expect(firstConnection.invoke).not.toHaveBeenCalled();
+  expect(secondConnection.invoke).toHaveBeenCalledWith('GetConnectionReport');
+  expect(JSON.stringify(app.toJSON())).toContain('second');
 });

@@ -69,11 +69,21 @@ for (const patch of patches) {
   let contents = fs.readFileSync(filePath, 'utf8');
 
   for (const [searchValue, replaceValue] of patch.replacements) {
-    if (!contents.includes(searchValue) && !contents.includes(replaceValue)) {
+    const hadSearchValue = contents.includes(searchValue);
+
+    if (!hadSearchValue && !contents.includes(replaceValue)) {
       throw new Error(`Patch no longer matches ${patch.file}`);
     }
 
+    if (!hadSearchValue) {
+      continue;
+    }
+
     contents = contents.replace(searchValue, replaceValue);
+
+    if (contents.includes(searchValue)) {
+      throw new Error(`Patch did not fully apply to ${patch.file}`);
+    }
   }
 
   fs.writeFileSync(filePath, contents);
