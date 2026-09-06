@@ -23,6 +23,14 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
+beforeEach(() => {
+  mockConnection.invoke.mockReset().mockResolvedValue({connected: true});
+  mockConnection.on.mockReset();
+  mockConnection.onclose.mockReset();
+  mockConnection.start.mockReset().mockResolvedValue(undefined);
+  mockConnection.stop.mockReset().mockResolvedValue(undefined);
+});
+
 jest.mock('@microsoft/signalr', () => {
   const builder = {
     build: jest.fn(() => mockConnection),
@@ -59,4 +67,24 @@ test('connects and renders the signalr report', async () => {
   expect(mockConnection.start).toHaveBeenCalled();
   expect(mockConnection.invoke).toHaveBeenCalledWith('GetConnectionReport');
   expect(JSON.stringify(app.toJSON())).toContain('connected');
+});
+
+test('shows a failure state when the signalr connection fails', async () => {
+  let app: ReactTestRenderer.ReactTestRenderer;
+
+  mockConnection.start.mockRejectedValueOnce(new Error('boom'));
+
+  await ReactTestRenderer.act(() => {
+    app = ReactTestRenderer.create(<App />);
+  });
+
+  const connectButton = app.root.findByProps({title: 'Connect SignalR'});
+
+  await ReactTestRenderer.act(async () => {
+    await connectButton.props.onPress();
+  });
+
+  expect(mockConnection.stop).toHaveBeenCalled();
+  expect(JSON.stringify(app.toJSON())).toContain('Failed');
+  expect(JSON.stringify(app.toJSON())).toContain('boom');
 });

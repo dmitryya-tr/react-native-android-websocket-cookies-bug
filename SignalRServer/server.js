@@ -73,6 +73,7 @@ const websocketServer = new WebSocketServer({noServer: true});
 
 server.on('upgrade', (request, socket, head) => {
   const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
+  const connectionToken = url.searchParams.get('id');
 
   if (url.pathname !== HUB_PATH) {
     socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
@@ -82,6 +83,12 @@ server.on('upgrade', (request, socket, head) => {
 
   if (!isOriginAllowed(request.headers.origin)) {
     socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+    socket.destroy();
+    return;
+  }
+
+  if (!connectionToken || !connections.has(connectionToken)) {
+    socket.write('HTTP/1.1 400 Bad Request\r\n\r\n');
     socket.destroy();
     return;
   }

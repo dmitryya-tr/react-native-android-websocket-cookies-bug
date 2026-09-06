@@ -63,12 +63,16 @@ for (const patch of patches) {
   const filePath = path.join(projectRoot, patch.file);
 
   if (!fs.existsSync(filePath)) {
-    continue;
+    throw new Error(`Expected file to exist: ${patch.file}`);
   }
 
   let contents = fs.readFileSync(filePath, 'utf8');
 
   for (const [searchValue, replaceValue] of patch.replacements) {
+    if (!contents.includes(searchValue) && !contents.includes(replaceValue)) {
+      throw new Error(`Patch no longer matches ${patch.file}`);
+    }
+
     contents = contents.replace(searchValue, replaceValue);
   }
 
