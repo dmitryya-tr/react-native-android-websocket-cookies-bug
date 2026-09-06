@@ -17,6 +17,7 @@ const ROOT_COOKIE_HEADER =
 const SCOPED_COOKIE_WITHOUT_PATH_HEADER =
   'scopedCookie=scoped-cookie-value; HttpOnly; SameSite=Lax';
 const RECORD_SEPARATOR = '\u001e';
+const NEGOTIATE_ENTRY_TTL_MS = 60_000;
 const connections = new Map();
 
 const server = http.createServer((request, response) => {
@@ -51,7 +52,11 @@ const server = http.createServer((request, response) => {
     const connectionToken = randomUUID();
     const report = buildRequestReport(request);
 
-    connections.set(connectionToken, report);
+    const cleanupTimer = setTimeout(() => {
+      connections.delete(connectionToken);
+    }, NEGOTIATE_ENTRY_TTL_MS);
+
+    connections.set(connectionToken, {report, cleanupTimer});
 
     writeJson(request, response, 200, {
       connectionId: connectionToken,
@@ -108,9 +113,11 @@ server.on('upgrade', (request, socket, head) => {
 
 websocketServer.on('connection', (websocket, request, url) => {
   const connectionToken = url.searchParams.get('id');
-  const negotiateReport = connectionToken ? connections.get(connectionToken) : null;
+  const negotiateEntry = connectionToken ? connections.get(connectionToken) : null;
+  const negotiateReport = negotiateEntry?.report ?? null;
 
-  if (connectionToken) {
+  if (negotiateEntry && connectionToken) {
+    clearTimeout(negotiateEntry.cleanupTimer);
     connections.delete(connectionToken);
   }
 

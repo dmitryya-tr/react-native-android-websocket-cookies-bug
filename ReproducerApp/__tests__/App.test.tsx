@@ -24,6 +24,7 @@ jest.mock('react-native-safe-area-context', () => {
 });
 
 beforeEach(() => {
+  global.fetch = jest.fn();
   mockConnection.invoke.mockReset().mockResolvedValue({connected: true});
   mockConnection.on.mockReset();
   mockConnection.onclose.mockReset();
@@ -67,6 +68,55 @@ test('connects and renders the signalr report', async () => {
   expect(mockConnection.start).toHaveBeenCalled();
   expect(mockConnection.invoke).toHaveBeenCalledWith('GetConnectionReport');
   expect(JSON.stringify(app.toJSON())).toContain('connected');
+});
+
+test('primes cookies and renders the HTTP report', async () => {
+  let app: ReactTestRenderer.ReactTestRenderer;
+
+  global.fetch.mockResolvedValueOnce({
+    ok: true,
+    text: jest.fn().mockResolvedValue('{"cookie":"ok"}'),
+  });
+
+  await ReactTestRenderer.act(() => {
+    app = ReactTestRenderer.create(<App />);
+  });
+
+  const primeButton = app.root.findByProps({title: 'Prime cookies'});
+
+  await ReactTestRenderer.act(async () => {
+    await primeButton.props.onPress();
+  });
+
+  expect(global.fetch).toHaveBeenCalledWith(
+    'http://10.0.2.2:3000/my/path/status',
+    {credentials: 'include'},
+  );
+  expect(JSON.stringify(app.toJSON())).toContain('cookie');
+  expect(JSON.stringify(app.toJSON())).toContain('ok');
+});
+
+test('shows an HTTP priming failure', async () => {
+  let app: ReactTestRenderer.ReactTestRenderer;
+
+  global.fetch.mockResolvedValueOnce({
+    ok: false,
+    status: 500,
+    statusText: 'Internal Server Error',
+    text: jest.fn().mockResolvedValue('nope'),
+  });
+
+  await ReactTestRenderer.act(() => {
+    app = ReactTestRenderer.create(<App />);
+  });
+
+  const primeButton = app.root.findByProps({title: 'Prime cookies'});
+
+  await ReactTestRenderer.act(async () => {
+    await primeButton.props.onPress();
+  });
+
+  expect(JSON.stringify(app.toJSON())).toContain('HTTP 500: nope');
 });
 
 test('shows a failure state when the signalr connection fails', async () => {
