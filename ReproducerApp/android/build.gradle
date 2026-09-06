@@ -8,8 +8,8 @@ buildscript {
         kotlinVersion = "2.2.0"
     }
     repositories {
-        google()
         mavenCentral()
+        google()
     }
     dependencies {
         classpath("com.android.tools.build:gradle")
