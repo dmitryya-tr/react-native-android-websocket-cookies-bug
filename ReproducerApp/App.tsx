@@ -88,12 +88,17 @@ function AppContent() {
     });
 
     connection.onclose(error => {
+      if (connectionRef.current === connection) {
+        connectionRef.current = null;
+      }
+
       setConnectionState(error ? `Disconnected: ${error.message}` : 'Disconnected');
     });
 
+    connectionRef.current = connection;
+
     try {
       await connection.start();
-      connectionRef.current = connection;
       setConnectionState('Connected');
 
       const report = await connection.invoke('GetConnectionReport');

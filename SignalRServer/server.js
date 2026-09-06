@@ -84,6 +84,11 @@ server.on('upgrade', (request, socket, head) => {
 websocketServer.on('connection', (websocket, request, url) => {
   const connectionToken = url.searchParams.get('id');
   const negotiateReport = connectionToken ? connections.get(connectionToken) : null;
+
+  if (connectionToken) {
+    connections.delete(connectionToken);
+  }
+
   const websocketReport = {
     transport: 'WebSockets',
     urls: buildServerUrls(request),
