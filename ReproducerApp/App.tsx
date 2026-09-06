@@ -104,6 +104,7 @@ function AppContent() {
       const report = await connection.invoke('GetConnectionReport');
       setSignalRReport(JSON.stringify(report, null, 2));
     } catch (error) {
+      await connection.stop().catch(() => undefined);
       connectionRef.current = null;
       setConnectionState('Failed');
       setSignalRReport(formatError(error));

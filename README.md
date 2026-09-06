@@ -40,6 +40,28 @@ Use the default base URL in the app and replace the host as needed for your devi
 http://10.0.2.2:3000/my/path
 ```
 
+Start the app from the React Native project:
+
+```sh
+cd ReproducerApp
+yarn install
+yarn start
+```
+
+In another terminal:
+
+```sh
+cd ReproducerApp
+yarn android
+```
+
+If you want to run iOS instead:
+
+```sh
+cd ReproducerApp
+yarn ios
+```
+
 Then:
 
 1. Tap **Prime cookies**
