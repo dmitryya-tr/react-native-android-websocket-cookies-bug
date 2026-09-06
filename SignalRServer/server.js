@@ -235,7 +235,7 @@ function buildSetCookieHeader(pathname) {
 function applyCorsHeaders(request, response) {
   const origin = request.headers.origin;
 
-  if (!isOriginAllowed(origin)) {
+  if (!origin || !isOriginAllowed(origin)) {
     return;
   }
 
