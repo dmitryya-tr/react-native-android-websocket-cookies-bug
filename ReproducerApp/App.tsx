@@ -115,6 +115,12 @@ function AppContent() {
         This app first primes cookies over HTTP, then connects to SignalR over
         WebSockets and shows which cookies the server received.
       </Text>
+      <Text style={styles.instructions}>
+        Expected URLs:
+        {'\n'}- HTTP status: {statusUrl}
+        {'\n'}- SignalR hub: {hubUrl}
+        {'\n'}- SignalR negotiate: {hubUrl}/negotiate
+      </Text>
 
       <Text style={styles.label}>Base URL</Text>
       <TextInput

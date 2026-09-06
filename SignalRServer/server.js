@@ -8,6 +8,10 @@ const PORT = Number(process.env.PORT ?? 3000);
 const BASE_PATH = normalizePath(process.env.BASE_PATH ?? '/my/path');
 const HUB_PATH = `${BASE_PATH}/hub`;
 const STATUS_PATH = `${BASE_PATH}/status`;
+const ROOT_COOKIE_HEADER =
+  'rootCookie=root-cookie-value; Path=/; HttpOnly; SameSite=Lax';
+const SCOPED_COOKIE_WITHOUT_PATH_HEADER =
+  'scopedCookie=scoped-cookie-value; HttpOnly; SameSite=Lax';
 const RECORD_SEPARATOR = '\u001e';
 const connections = new Map();
 
@@ -23,6 +27,7 @@ const server = http.createServer((request, response) => {
     writeJson(request, response, 200, {
       message:
         `Prime cookies here before starting SignalR. The scoped cookie intentionally omits Path so it inherits the ${BASE_PATH} scope.`,
+      urls: buildServerUrls(request),
       basePath: BASE_PATH,
       hubPath: HUB_PATH,
       request: buildRequestReport(request),
@@ -40,6 +45,7 @@ const server = http.createServer((request, response) => {
       connectionId: connectionToken,
       connectionToken,
       negotiateVersion: 1,
+      urls: buildServerUrls(request),
       availableTransports: [
         {
           transport: 'WebSockets',
@@ -53,6 +59,7 @@ const server = http.createServer((request, response) => {
 
   writeJson(request, response, 404, {
     message: 'Not found',
+    urls: buildServerUrls(request),
     basePath: BASE_PATH,
     hubPath: HUB_PATH,
   });
@@ -79,6 +86,7 @@ websocketServer.on('connection', (websocket, request, url) => {
   const negotiateReport = connectionToken ? connections.get(connectionToken) : null;
   const websocketReport = {
     transport: 'WebSockets',
+    urls: buildServerUrls(request),
     websocketPath: url.pathname,
     websocketQuery: url.search,
     websocketRequest: buildRequestReport(request),
@@ -126,7 +134,12 @@ websocketServer.on('connection', (websocket, request, url) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`SignalR cookie repro server listening on http://${HOST}:${PORT}${BASE_PATH}`);
+  console.log(`HTTP base URL: ${buildAbsoluteHttpUrl(HOST, PORT, BASE_PATH)}`);
+  console.log(`HTTP status URL: ${buildAbsoluteHttpUrl(HOST, PORT, STATUS_PATH)}`);
+  console.log(
+    `SignalR negotiate URL: ${buildAbsoluteHttpUrl(HOST, PORT, `${HUB_PATH}/negotiate`)}`,
+  );
+  console.log(`SignalR WebSocket URL: ${buildAbsoluteWsUrl(HOST, PORT, HUB_PATH)}`);
 });
 
 function normalizePath(pathname) {
@@ -144,6 +157,18 @@ function buildRequestReport(request) {
     path: request.url ?? '/',
     cookieHeader: request.headers.cookie ?? null,
     cookies: parseCookies(request.headers.cookie),
+  };
+}
+
+function buildServerUrls(request) {
+  const hostHeader = request?.headers?.host ?? `localhost:${PORT}`;
+  const hostname = hostHeader.startsWith('0.0.0.0:') ? hostHeader.replace('0.0.0.0', 'localhost') : hostHeader;
+
+  return {
+    baseHttpUrl: `http://${hostname}${BASE_PATH}`,
+    statusHttpUrl: `http://${hostname}${STATUS_PATH}`,
+    negotiateHttpUrl: `http://${hostname}${HUB_PATH}/negotiate`,
+    hubWebSocketUrl: `ws://${hostname}${HUB_PATH}`,
   };
 }
 
@@ -177,11 +202,21 @@ function writeJson(request, response, statusCode, payload) {
 }
 
 function buildSetCookieHeader(pathname) {
-  const cookies = ['rootCookie=root-cookie-value; Path=/; HttpOnly; SameSite=Lax'];
+  const cookies = [ROOT_COOKIE_HEADER];
 
   if (pathname === BASE_PATH || pathname === STATUS_PATH) {
-    cookies.push('scopedCookie=scoped-cookie-value; HttpOnly; SameSite=Lax');
+    cookies.push(SCOPED_COOKIE_WITHOUT_PATH_HEADER);
   }
 
   return cookies;
+}
+
+function buildAbsoluteHttpUrl(host, port, pathname) {
+  const normalizedHost = host === '0.0.0.0' ? 'localhost' : host;
+  return `http://${normalizedHost}:${port}${pathname}`;
+}
+
+function buildAbsoluteWsUrl(host, port, pathname) {
+  const normalizedHost = host === '0.0.0.0' ? 'localhost' : host;
+  return `ws://${normalizedHost}:${port}${pathname}`;
 }

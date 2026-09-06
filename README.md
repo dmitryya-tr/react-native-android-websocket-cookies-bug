@@ -10,6 +10,14 @@ The server sets two cookies on every HTTP response:
 - `rootCookie=...; Path=/`
 - `scopedCookie=...` without a `Path` attribute, so it inherits the `/my/path` scope
 
+Important:
+
+- the React Native app base URL must include the path: `http://host:3000/my/path`
+- the status endpoint is `http://host:3000/my/path/status`
+- the SignalR negotiate endpoint is `http://host:3000/my/path/hub/negotiate`
+- the SignalR WebSocket endpoint is `ws://host:3000/my/path/hub`
+- the Node server in this repo is SignalR-compatible for this repro; Node does not have an official Microsoft SignalR server package like ASP.NET Core does
+
 ## Run the Node server
 
 ```sh
