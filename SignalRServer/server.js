@@ -157,11 +157,20 @@ function parseCookies(cookieHeader) {
 }
 
 function writeJson(request, response, statusCode, payload) {
+  const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
+
   response.statusCode = statusCode;
   response.setHeader('Content-Type', 'application/json; charset=utf-8');
-  response.setHeader('Set-Cookie', [
-    'rootCookie=root-cookie-value; Path=/; HttpOnly; SameSite=Lax',
-    'scopedCookie=scoped-cookie-value; HttpOnly; SameSite=Lax',
-  ]);
+  response.setHeader('Set-Cookie', buildSetCookieHeader(pathname));
   response.end(payload === null ? '' : JSON.stringify(payload, null, 2));
+}
+
+function buildSetCookieHeader(pathname) {
+  const cookies = ['rootCookie=root-cookie-value; Path=/; HttpOnly; SameSite=Lax'];
+
+  if (pathname === BASE_PATH || pathname === STATUS_PATH) {
+    cookies.push('scopedCookie=scoped-cookie-value; HttpOnly; SameSite=Lax');
+  }
+
+  return cookies;
 }

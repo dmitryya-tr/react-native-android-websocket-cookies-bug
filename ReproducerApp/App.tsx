@@ -118,6 +118,7 @@ function AppContent() {
 
       <Text style={styles.label}>Base URL</Text>
       <TextInput
+        accessibilityLabel="SignalR base URL"
         autoCapitalize="none"
         autoCorrect={false}
         onChangeText={setBaseUrl}

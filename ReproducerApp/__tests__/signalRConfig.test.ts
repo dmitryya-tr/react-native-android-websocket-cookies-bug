@@ -24,4 +24,10 @@ describe('signalRConfig', () => {
       'https://my.domain/my/path/hub',
     );
   });
+
+  it('builds endpoint URLs from a root domain input', () => {
+    expect(normalizeBaseUrl('https://my.domain/')).toBe('https://my.domain');
+    expect(buildStatusUrl('https://my.domain/')).toBe('https://my.domain/status');
+    expect(buildHubUrl('https://my.domain/')).toBe('https://my.domain/hub');
+  });
 });
