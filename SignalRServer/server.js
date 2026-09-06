@@ -223,21 +223,21 @@ function buildSetCookieHeader(pathname) {
     cookies.push(SCOPED_COOKIE_WITHOUT_PATH_HEADER);
   }
 
-  function applyCorsHeaders(request, response) {
-    const origin = request.headers.origin;
+  return cookies;
+}
 
-    if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
-      return;
-    }
+function applyCorsHeaders(request, response) {
+  const origin = request.headers.origin;
 
-    response.setHeader('Access-Control-Allow-Origin', origin);
-    response.setHeader('Access-Control-Allow-Credentials', 'true');
-    response.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-    response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    response.setHeader('Vary', 'Origin');
+  if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+    return;
   }
 
-  return cookies;
+  response.setHeader('Access-Control-Allow-Origin', origin);
+  response.setHeader('Access-Control-Allow-Credentials', 'true');
+  response.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  response.setHeader('Vary', 'Origin');
 }
 
 function buildAbsoluteHttpUrl(host, port, pathname) {
