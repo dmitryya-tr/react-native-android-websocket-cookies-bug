@@ -160,7 +160,6 @@ function AppContent() {
         Base URL
       </Text>
       <TextInput
-        aria-labelledby="signalr-base-url-label"
         accessibilityLabel="SignalR base URL"
         autoCapitalize="none"
         autoCorrect={false}

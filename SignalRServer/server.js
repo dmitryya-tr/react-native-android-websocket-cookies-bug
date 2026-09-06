@@ -32,6 +32,12 @@ const server = http.createServer((request, response) => {
     url.pathname === `${HUB_PATH}/negotiate`;
 
   if (request.method === 'OPTIONS' && isKnownRoute) {
+    if (request.headers.origin && !isOriginAllowed(request.headers.origin)) {
+      response.statusCode = 403;
+      response.end();
+      return;
+    }
+
     writeJson(request, response, 204, null);
     return;
   }
