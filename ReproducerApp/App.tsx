@@ -29,6 +29,7 @@ function App() {
 }
 
 function AppContent() {
+  const isDarkMode = useColorScheme() === 'dark';
   const connectionRef = useRef<HubConnection | null>(null);
   const [baseUrl, setBaseUrl] = useState(DEFAULT_BASE_URL);
   const [httpReport, setHttpReport] = useState('Tap "Prime cookies" first.');
@@ -37,6 +38,7 @@ function AppContent() {
 
   const statusUrl = useMemo(() => buildStatusUrl(baseUrl), [baseUrl]);
   const hubUrl = useMemo(() => buildHubUrl(baseUrl), [baseUrl]);
+  const codeBlockStyle = isDarkMode ? styles.codeDark : styles.codeLight;
 
   useEffect(() => {
     return () => {
@@ -89,15 +91,15 @@ function AppContent() {
       setConnectionState(error ? `Disconnected: ${error.message}` : 'Disconnected');
     });
 
-    connectionRef.current = connection;
-
     try {
       await connection.start();
+      connectionRef.current = connection;
       setConnectionState('Connected');
 
       const report = await connection.invoke('GetConnectionReport');
       setSignalRReport(JSON.stringify(report, null, 2));
     } catch (error) {
+      connectionRef.current = null;
       setConnectionState('Failed');
       setSignalRReport(formatError(error));
     }
@@ -127,6 +129,8 @@ function AppContent() {
         accessibilityLabel="SignalR base URL"
         autoCapitalize="none"
         autoCorrect={false}
+        inputMode="url"
+        keyboardType="url"
         onChangeText={setBaseUrl}
         style={styles.input}
         value={baseUrl}
@@ -139,10 +143,10 @@ function AppContent() {
       </View>
 
       <Text style={styles.sectionTitle}>Computed URLs</Text>
-      <Text selectable style={styles.code}>
+      <Text selectable style={[styles.code, codeBlockStyle]}>
         {statusUrl}
       </Text>
-      <Text selectable style={styles.code}>
+      <Text selectable style={[styles.code, codeBlockStyle]}>
         {hubUrl}
       </Text>
 
@@ -150,12 +154,12 @@ function AppContent() {
       <Text style={styles.body}>{connectionState}</Text>
 
       <Text style={styles.sectionTitle}>HTTP cookie priming report</Text>
-      <Text selectable style={styles.code}>
+      <Text selectable style={[styles.code, codeBlockStyle]}>
         {httpReport}
       </Text>
 
       <Text style={styles.sectionTitle}>SignalR report</Text>
-      <Text selectable style={styles.code}>
+      <Text selectable style={[styles.code, codeBlockStyle]}>
         {signalRReport}
       </Text>
     </ScrollView>
@@ -179,11 +183,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   code: {
-    backgroundColor: '#f4f4f4',
     borderRadius: 8,
     fontFamily: 'monospace',
     marginBottom: 16,
     padding: 12,
+  },
+  codeDark: {
+    backgroundColor: '#1f2937',
+    color: '#f9fafb',
+  },
+  codeLight: {
+    backgroundColor: '#f4f4f4',
+    color: '#111827',
   },
   content: {
     padding: 24,

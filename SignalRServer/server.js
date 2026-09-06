@@ -162,13 +162,18 @@ function buildRequestReport(request) {
 
 function buildServerUrls(request) {
   const hostHeader = request?.headers?.host ?? `localhost:${PORT}`;
-  const hostname = hostHeader.startsWith('0.0.0.0:') ? hostHeader.replace('0.0.0.0', 'localhost') : hostHeader;
+  const normalizedHostHeader = hostHeader.startsWith('0.0.0.0:')
+    ? hostHeader.replace('0.0.0.0', 'localhost')
+    : hostHeader;
 
   return {
-    baseHttpUrl: `http://${hostname}${BASE_PATH}`,
-    statusHttpUrl: `http://${hostname}${STATUS_PATH}`,
-    negotiateHttpUrl: `http://${hostname}${HUB_PATH}/negotiate`,
-    hubWebSocketUrl: `ws://${hostname}${HUB_PATH}`,
+    baseHttpUrl: new URL(BASE_PATH, `http://${normalizedHostHeader}`).toString(),
+    statusHttpUrl: new URL(STATUS_PATH, `http://${normalizedHostHeader}`).toString(),
+    negotiateHttpUrl: new URL(
+      `${HUB_PATH}/negotiate`,
+      `http://${normalizedHostHeader}`,
+    ).toString(),
+    hubWebSocketUrl: new URL(HUB_PATH, `ws://${normalizedHostHeader}`).toString(),
   };
 }
 
@@ -212,11 +217,18 @@ function buildSetCookieHeader(pathname) {
 }
 
 function buildAbsoluteHttpUrl(host, port, pathname) {
-  const normalizedHost = host === '0.0.0.0' ? 'localhost' : host;
-  return `http://${normalizedHost}:${port}${pathname}`;
+  return new URL(pathname, buildBaseOrigin('http', host, port)).toString();
 }
 
 function buildAbsoluteWsUrl(host, port, pathname) {
+  return new URL(pathname, buildBaseOrigin('ws', host, port)).toString();
+}
+
+function buildBaseOrigin(protocol, host, port) {
   const normalizedHost = host === '0.0.0.0' ? 'localhost' : host;
-  return `ws://${normalizedHost}:${port}${pathname}`;
+  const hostname = normalizedHost.includes(':') && !normalizedHost.startsWith('[')
+    ? `[${normalizedHost}]`
+    : normalizedHost;
+
+  return `${protocol}://${hostname}:${port}`;
 }
