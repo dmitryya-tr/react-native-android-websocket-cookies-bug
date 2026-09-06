@@ -23,6 +23,12 @@ Important:
 ```sh
 cd SignalRServer
 npm install
+ALLOWED_ORIGINS=http://localhost:8081,http://10.0.2.2:8081 npm start
+```
+
+If you do not need browser-style CORS, you can still start it without the allowlist:
+
+```sh
 npm start
 ```
 

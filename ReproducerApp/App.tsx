@@ -70,7 +70,7 @@ function AppContent() {
     const existingConnection = connectionRef.current;
 
     if (existingConnection) {
-      await existingConnection.stop();
+      await existingConnection.stop().catch(() => undefined);
     }
 
     setConnectionState('Connecting');
@@ -130,8 +130,11 @@ function AppContent() {
         {'\n'}- SignalR negotiate: {hubUrl}/negotiate
       </Text>
 
-      <Text style={styles.label}>Base URL</Text>
+      <Text nativeID="signalr-base-url-label" style={styles.label}>
+        Base URL
+      </Text>
       <TextInput
+        accessibilityLabelledBy="signalr-base-url-label"
         accessibilityLabel="SignalR base URL"
         autoCapitalize="none"
         autoCorrect={false}

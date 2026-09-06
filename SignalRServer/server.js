@@ -8,6 +8,10 @@ const PORT = Number(process.env.PORT ?? 3000);
 const BASE_PATH = normalizePath(process.env.BASE_PATH ?? '/my/path');
 const HUB_PATH = `${BASE_PATH}/hub`;
 const STATUS_PATH = `${BASE_PATH}/status`;
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
 const ROOT_COOKIE_HEADER =
   'rootCookie=root-cookie-value; Path=/; HttpOnly; SameSite=Lax';
 const SCOPED_COOKIE_WITHOUT_PATH_HEADER =
@@ -202,6 +206,7 @@ function writeJson(request, response, statusCode, payload) {
   const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
 
   response.statusCode = statusCode;
+  applyCorsHeaders(request, response);
   response.setHeader('Content-Type', 'application/json; charset=utf-8');
 
   if (request.method !== 'OPTIONS') {
@@ -216,6 +221,20 @@ function buildSetCookieHeader(pathname) {
 
   if (pathname === BASE_PATH || pathname === STATUS_PATH) {
     cookies.push(SCOPED_COOKIE_WITHOUT_PATH_HEADER);
+  }
+
+  function applyCorsHeaders(request, response) {
+    const origin = request.headers.origin;
+
+    if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+      return;
+    }
+
+    response.setHeader('Access-Control-Allow-Origin', origin);
+    response.setHeader('Access-Control-Allow-Credentials', 'true');
+    response.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    response.setHeader('Vary', 'Origin');
   }
 
   return cookies;
