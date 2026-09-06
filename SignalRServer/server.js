@@ -86,11 +86,18 @@ websocketServer.on('connection', (websocket, request, url) => {
   };
 
   websocket.on('message', messageBuffer => {
-    const messages = messageBuffer
-      .toString()
-      .split(RECORD_SEPARATOR)
-      .filter(Boolean)
-      .map(payload => JSON.parse(payload));
+    let messages;
+
+    try {
+      messages = messageBuffer
+        .toString()
+        .split(RECORD_SEPARATOR)
+        .filter(Boolean)
+        .map(payload => JSON.parse(payload));
+    } catch {
+      websocket.close(1007, 'Invalid JSON payload');
+      return;
+    }
 
     for (const message of messages) {
       if (message.protocol === 'json') {
@@ -161,7 +168,11 @@ function writeJson(request, response, statusCode, payload) {
 
   response.statusCode = statusCode;
   response.setHeader('Content-Type', 'application/json; charset=utf-8');
-  response.setHeader('Set-Cookie', buildSetCookieHeader(pathname));
+
+  if (request.method !== 'OPTIONS') {
+    response.setHeader('Set-Cookie', buildSetCookieHeader(pathname));
+  }
+
   response.end(payload === null ? '' : JSON.stringify(payload, null, 2));
 }
 
